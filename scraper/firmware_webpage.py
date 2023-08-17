@@ -17,14 +17,18 @@ class FirmwareNodeHTML:
         last_file_url = self.get_last_file_url()
         info = {
             "model": self.get_model(),
-            "status": self.get_status(),
+            "discontinued": self.get_status(),
             "last_file_url": last_file_url,
+            "last_file_name": self.get_last_file_name(last_file_url),
             "older_file_url": self.get_older_files(),
             "version": self.get_version(last_file_url),
             "date": self.get_date(last_file_url)
         }
 
         return info
+    
+    def get_last_file_name(self, file_url: str) -> str:
+        return file_url.split("/")[-1]
     
     def get_date(self,file_url: str) -> str:
         final_date: str = "unknown"
@@ -70,12 +74,12 @@ class FirmwareNodeHTML:
         parent = self.body.find('label', text='Latest Firmware:').parent
         return parent.find('a','firmware')['href']
 
-    def get_status(self) -> str:
-        result = "valid"
+    def get_status(self) -> bool:
+        discontinued = False
         if "is-discontinued-1" in self.container["class"]:
-            result = "discontinued"
+            discontinued = True
         
-        return result
+        return discontinued
 
 
 @dataclass()

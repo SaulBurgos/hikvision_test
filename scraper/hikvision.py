@@ -13,8 +13,8 @@ HEADERS = {
     "accept": "*/*",
 }
 
-def get_all_firmwares(url: str) -> Optional[Dict]:
-    pages_to_scrape = {}
+def get_all_firmwares(url: str) -> List[Dict]:
+    pages_to_scrape = []
     urls_to_scrape: List[str] = []
     pages_content = []
 
@@ -27,7 +27,9 @@ def get_all_firmwares(url: str) -> Optional[Dict]:
     domain_url = parse_result.scheme + "://" + parse_result.hostname
     links = find_links_with_firmwares(html, parse_result.path)
 
-    pages_to_scrape = list(map(lambda x: { "url": domain_url + x, "category": x.split("/")[-1] }, links))
+    pages_to_scrape = list(
+        map(lambda x: { "url": domain_url + x, "category": x.split("/")[-1] }, links)
+    )
     urls_to_scrape = list(map(lambda x: x["url"], pages_to_scrape))
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
