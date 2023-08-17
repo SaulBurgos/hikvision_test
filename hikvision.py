@@ -7,29 +7,17 @@
 # import requests
 # from bs4 import BeautifulSoup
 from typing import List, Dict, Union, Any
+from models import firmware
 from models.firmware import Firmware
 from models.vendor_metadata import VendorMetadata
-from hikvision_scraper import get_html_content
+from hikvision_scraper import get_all_firmwares
 
-DOMAIN_URL = "https://us.hikvision.com"
-MANIFEST_PATH = "/en/support-resources/firmware/"
+MANIFEST_URL = "https://us.hikvision.com/en/support-resources/firmware/"
 
 # Complete the 'get_manifest' function below
-def get_manifest(doamin_url: str, manifest_path: str) -> List[VendorMetadata]:
+def get_manifest(manifest_url: str) -> List[VendorMetadata]:
     vendor_list: list = []
-    urls_to_scrape: List[str] = []
-
-    html = get_html_content(doamin_url + manifest_path)
-
-    if html is None:
-        return vendor_list
-
-    side_menu = html.find('div',"menu-name-main-menu")
     
-    for element in side_menu.select(f'a[href^=\"{manifest_path}\"]'):
-        urls_to_scrape.append(doamin_url + element['href'])
-
-    print(urls_to_scrape)
     return vendor_list
 
 
@@ -62,7 +50,11 @@ def output_firmware(manifest: List[VendorMetadata]) -> List[Firmware]:
 
 
 def main():
-    manifest = get_manifest(DOMAIN_URL, MANIFEST_PATH)
+    firmwares_raw = get_all_firmwares(MANIFEST_URL)
+
+    if firmwares_raw is None:
+        print("Error fetching firmware from manifest url")
+        return
 
     # firmwares = output_firmware(get_manifest(MANIFEST_URL))
     # for firmware in firmwares:

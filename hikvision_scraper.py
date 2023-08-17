@@ -1,17 +1,61 @@
-from typing import Optional, List, Any
+from typing import Optional, Dict, List
 from bs4 import BeautifulSoup
 import requests
+from urllib.parse import urlparse
+import concurrent.futures
 
+NUM_THREADS = 5
 MOZILLA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
 HEADERS = {
     "User-Agent": MOZILLA,
     "accept": "*/*",
 }
 
-def get_html_content(url: str) -> Optional[BeautifulSoup]:
+def get_all_firmwares(url: str) -> Optional[Dict]:
+    firmwares = {}
+    urls_to_scrape: List[str] = []
+    pages_content = []
+
+    html = scrape_page(url)
+
+    if html is None:
+        return None
+    
+    parse_result = urlparse(url)
+    domain_url = parse_result.scheme + "://" + parse_result.hostname
+    links = find_links_with_firmwares(html, parse_result.path)
+    urls_to_scrape = list(map(lambda x: domain_url + x, links))
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
+        pages_content = list(executor.map(scrape_page, urls_to_scrape))
+
+    for current_page in pages_content:
+        parent_element = current_page.select_one('.view-firmware.view-id-firmware')
+        children = parent_element.find('div','view-content').children
+
+        for child in children:
+            print(child)
+
+    return firmwares
+
+def find_links_with_firmwares(html: BeautifulSoup, path_pattern: str) -> List:
+    links = []
+    side_menu = html.find('div',"menu-name-main-menu")
+    
+    for element in side_menu.select(f'a[href^=\"{path_pattern}\"]'):
+        links.append(element['href'])
+
+    return links
+
+
+def scrape_page(url: str) -> Optional[BeautifulSoup]:
+
     try:
         request_response = requests.get(url, headers=HEADERS)
-        return BeautifulSoup(request_response.content, 'html5lib')
+        
+        if request_response.status_code == 200:
+            return BeautifulSoup(request_response.content, 'html5lib')
+        
     except Exception as e:
         print("An error occurred:", str(e))
         return None
