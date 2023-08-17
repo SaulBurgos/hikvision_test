@@ -10,7 +10,7 @@ from typing import List, Dict, Union, Any
 from models import firmware
 from models.firmware import Firmware
 from models.vendor_metadata import VendorMetadata
-from hikvision_scraper import get_all_firmwares
+from scraper.hikvision import get_all_firmwares
 
 MANIFEST_URL = "https://us.hikvision.com/en/support-resources/firmware/"
 

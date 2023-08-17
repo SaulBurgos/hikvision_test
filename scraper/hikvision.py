@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import requests
 from urllib.parse import urlparse
 import concurrent.futures
+from .firmware_webpage import FirmwareWebPage
 
 NUM_THREADS = 5
 MOZILLA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
@@ -27,16 +28,14 @@ def get_all_firmwares(url: str) -> Optional[Dict]:
     urls_to_scrape = list(map(lambda x: domain_url + x, links))
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
-        pages_content = list(executor.map(scrape_page, urls_to_scrape))
+        pages_content = list(executor.map(scrape_page, urls_to_scrape[:1]))
 
     for current_page in pages_content:
-        parent_element = current_page.select_one('.view-firmware.view-id-firmware')
-        children = parent_element.find('div','view-content').children
-
-        for child in children:
-            print(child)
+        firmware_page = FirmwareWebPage(html=current_page)
+        print(firmware_page.get_firmware_list())        
 
     return firmwares
+
 
 def find_links_with_firmwares(html: BeautifulSoup, path_pattern: str) -> List:
     links = []
