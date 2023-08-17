@@ -13,16 +13,21 @@ class FirmwareNodeHTML:
             self.header, self.body = self.container.find_all(recursive=False)
 
     def get_info(self) -> Dict:
+        last_file_url = self.get_last_file_url()
         info = {
             "model": self.get_model(),
             "status": self.get_status(),
-            "last_file_url": self.get_last_file_url(),
+            "last_file_url": last_file_url,
             "older_file_url": self.get_older_files(),
-            "version": None,
+            "version": self.get_version(last_file_url),
             "date": None
         }
 
         return info
+    
+    def get_version(self,file_url: str) -> str:
+        # assumption that it will be int he same position
+        return file_url.split("_")[-2]
     
     def get_model(self) -> str:
         return self.header.get_text().strip()
