@@ -1,4 +1,5 @@
 from typing import Optional, Dict, List
+from unicodedata import category
 from bs4 import BeautifulSoup
 import requests
 from urllib.parse import urlparse
@@ -13,7 +14,7 @@ HEADERS = {
 }
 
 def get_all_firmwares(url: str) -> Optional[Dict]:
-    firmwares = {}
+    pages_to_scrape = {}
     urls_to_scrape: List[str] = []
     pages_content = []
 
@@ -25,16 +26,18 @@ def get_all_firmwares(url: str) -> Optional[Dict]:
     parse_result = urlparse(url)
     domain_url = parse_result.scheme + "://" + parse_result.hostname
     links = find_links_with_firmwares(html, parse_result.path)
-    urls_to_scrape = list(map(lambda x: domain_url + x, links))
+
+    pages_to_scrape = list(map(lambda x: { "url": domain_url + x, "category": x.split("/")[-1] }, links))
+    urls_to_scrape = list(map(lambda x: x["url"], pages_to_scrape))
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
         pages_content = list(executor.map(scrape_page, urls_to_scrape[:1]))
 
-    for current_page in pages_content:
+    for index, current_page in enumerate(pages_content):
         firmware_page = FirmwareWebPage(html=current_page)
-        print(firmware_page.get_firmware_list())        
+        pages_to_scrape[index]["firmwares"] = firmware_page.get_firmware_list()
 
-    return firmwares
+    return pages_to_scrape
 
 
 def find_links_with_firmwares(html: BeautifulSoup, path_pattern: str) -> List:

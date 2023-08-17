@@ -81,7 +81,6 @@ class FirmwareNodeHTML:
 @dataclass()
 class FirmwareWebPage:
     html: BeautifulSoup = None
-    #NOTE: Maybe I don't want to do this like property class
 
     def get_firmware_list(self) -> List[Dict]:
         firmware_list = []
@@ -93,7 +92,6 @@ class FirmwareWebPage:
         for child in children:
             firmware_node = FirmwareNodeHTML(container=child)
             info = firmware_node.get_info()
-            print(info)
             firmware_list.append(info)
 
         return firmware_list

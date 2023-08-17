@@ -50,9 +50,9 @@ def output_firmware(manifest: List[VendorMetadata]) -> List[Firmware]:
 
 
 def main():
-    firmwares_raw = get_all_firmwares(MANIFEST_URL)
+    firmwares_list_raw = get_all_firmwares(MANIFEST_URL)
 
-    if firmwares_raw is None:
+    if firmwares_list_raw is None:
         print("Error fetching firmware from manifest url")
         return
 
