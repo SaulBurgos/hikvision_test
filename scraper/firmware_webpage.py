@@ -1,6 +1,7 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from bs4 import BeautifulSoup
 from typing import Dict, List
+from datetime import datetime
 
 @dataclass()
 class FirmwareNodeHTML:
@@ -20,10 +21,30 @@ class FirmwareNodeHTML:
             "last_file_url": last_file_url,
             "older_file_url": self.get_older_files(),
             "version": self.get_version(last_file_url),
-            "date": None
+            "date": self.get_date(last_file_url)
         }
 
         return info
+    
+    def get_date(self,file_url: str) -> str:
+        final_date: str = "unknown"
+        date_string: str = file_url.split("_")[-1]
+
+        if len(date_string) == 0:
+            return final_date
+        
+        date_components = date_string.split(".")
+
+        if len(date_components) == 1:
+            return final_date
+        
+        try:
+            date = datetime.strptime(date_components[0], "%y%m%d")
+            final_date = date.strftime("%Y-%m-%dT%H:%M:%SZ")
+        except Exception as e:
+            print("incorrect formart of date:", date_components[0])
+        
+        return final_date
     
     def get_version(self,file_url: str) -> str:
         # assumption that it will be int he same position
@@ -61,7 +82,6 @@ class FirmwareNodeHTML:
 class FirmwareWebPage:
     html: BeautifulSoup = None
     #NOTE: Maybe I don't want to do this like property class
-    # firmware_nodes: List[FirmwareNodeHTML] = field(default_factory=lambda: [])
 
     def get_firmware_list(self) -> List[Dict]:
         firmware_list = []
@@ -76,8 +96,7 @@ class FirmwareWebPage:
             print(info)
             firmware_list.append(info)
 
-
-        return "I am a dictionary of firmware"
+        return firmware_list
     
     def get_direct_children_from_parent(
         self, parent_element: BeautifulSoup
