@@ -16,39 +16,23 @@ from itertools import groupby
 MANIFEST_URL = "https://us.hikvision.com/en/support-resources/firmware/"
 
 # Complete the 'get_manifest' function below
-def get_manifest(pages_with_firmwares_raw: List) -> List[VendorMetadata]:
+def get_manifest(firmwares_list: List) -> List[VendorMetadata]:
     vendor_list: list = []
 
-    for page_firmware in pages_with_firmwares_raw:
+    for current_firmware in firmwares_list:
 
-        for current_firmware in page_firmware.get('firmwares',[]):
-
-            vendor = VendorMetadata(
-                product_family=page_firmware.get("category",""),
-                models=current_firmware.get("model",""),
-                status=current_firmware.get("status",""),
-                os="",
-                version=current_firmware.get("version",""),
-                filename=""
-
-                # models=firmware["models"],
-                # status=firmware["status"],
-                # os=firmware["os"],
-                # version=firmware["version"],
-                # filename=firmware["filename"],
-                # landing_urls=firmware["landing_urls"],
-                # firmware_urls=firmware["firmware_urls"],
-                # bootloader_url=firmware["bootloader_url"],
-                # release_notes=firmware["release_notes"],
-                # release_date=firmware["release_date"],
-                # device_picture_urls=firmware["device_picture_urls"],
-                # user_manual=firmware["user_manual"],
-                # fixed_cves=firmware["fixed_cves"],
-                # vendor_metadata=firmware["vendor_metadata"],
-                # description=firmware["description"],
-                # discontinued=firmware["discontinued"],
-            )
-            vendor_list.append(vendor)
+        vendor = VendorMetadata(
+            product_family=current_firmware.get("product_family",""),
+            models=current_firmware.get("models",[]),
+            status="",
+            os="",
+            version=current_firmware.get("version",""),
+            filename=current_firmware.get("file_name",""),
+            release_date=current_firmware.get("release_date",""),
+            landing_urls=[current_firmware.get("file_url","")],
+            discontinued=current_firmware.get("discontinued"),        
+        )
+        vendor_list.append(vendor)
     
     return vendor_list
 
@@ -108,7 +92,8 @@ def reorganize_firmwares(pages_with_firmwares_raw: List[Dict]) -> List[Dict]:
             "version": "",
             "file_name": "",
             "release_date": "",
-            "discontinued": None
+            "discontinued": None,
+            "product_family": "",
         }
 
         for item in value:
@@ -119,6 +104,7 @@ def reorganize_firmwares(pages_with_firmwares_raw: List[Dict]) -> List[Dict]:
             new_item_group["file_name"] = item.get("file_name")
             new_item_group["release_date"] = item.get("date")
             new_item_group["discontinued"] = item.get("discontinued")
+            new_item_group["product_family"] = item.get("category")
 
         result.append(new_item_group)
 
@@ -131,8 +117,8 @@ def main():
         print("Error fetching firmware from manifest url")
         return
 
-    firmwares_list_raw = reorganize_firmwares(pages_with_firmwares_raw)
-    # vendor_metadata_list = get_manifest(pages_with_firmwares_raw)
+    firmwares_list_by_file_url = reorganize_firmwares(pages_with_firmwares_raw)
+    vendor_metadata_list = get_manifest(firmwares_list_by_file_url)
     # firmwares = output_firmware(vendor_metadata_list)
     # for firmware in firmwares:
     #     print(firmware.to_json())
