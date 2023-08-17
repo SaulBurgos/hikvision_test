@@ -14,16 +14,36 @@ class FirmwareNodeHTML:
 
     def get_info(self) -> Dict:
         info = {
-            "model": self.header.get_text().strip(),
+            "model": self.get_model(),
             "status": self.get_status(),
-            "last_file_url": None,
-            "older_file_url": None,
+            "last_file_url": self.get_last_file_url(),
+            "older_file_url": self.get_older_files(),
             "version": None,
             "date": None
         }
 
         return info
     
+    def get_model(self) -> str:
+        return self.header.get_text().strip()
+    
+    def get_older_files(self) -> List:
+        files = []
+        label_older = self.body.find('label', text='Older Versions:')
+
+        if label_older is not None:
+            for sibling in label_older.find_next_siblings():
+                files.append({
+                    "file_url": sibling.find('a','firmware')['href'],
+                    "file_name": sibling.find('a','firmware').get_text()
+                })
+
+        return files
+    
+    def get_last_file_url(self) -> str:
+        parent = self.body.find('label', text='Latest Firmware:').parent
+        return parent.find('a','firmware')['href']
+
     def get_status(self) -> str:
         result = "valid"
         if "is-discontinued-1" in self.container["class"]:
