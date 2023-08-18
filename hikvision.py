@@ -1,13 +1,4 @@
-
-# import json
-# from pydoc import HTMLDoc
-# import re
-# from urllib import response
-# from datetime import datetime
-# import requests
-# from bs4 import BeautifulSoup
 from typing import List, Dict, Union, Any
-from models import firmware
 from models.firmware import Firmware
 from models.vendor_metadata import VendorMetadata
 from scraper.hikvision import get_all_firmwares
@@ -15,17 +6,16 @@ from itertools import groupby
 
 MANIFEST_URL = "https://us.hikvision.com/en/support-resources/firmware/"
 
-# Complete the 'get_manifest' function below
 def get_manifest(firmwares_list: List) -> List[VendorMetadata]:
     vendor_list: list = []
 
     for current_firmware in firmwares_list:
-
         vendor = VendorMetadata(
             product_family=current_firmware.get("product_family",""),
             models=current_firmware.get("models",[]),
             status="",
             os="",
+            release_notes="",
             version=current_firmware.get("version",""),
             filename=current_firmware.get("file_name",""),
             release_date=current_firmware.get("release_date",""),
@@ -52,7 +42,7 @@ def output_firmware(manifest: List[VendorMetadata]) -> List[Firmware]:
 
     for fw_url in url_to_fw.keys():
         vendor = url_to_fw[fw_url][0]
-        firmware = Firmware(
+        new_firmware = Firmware(
             version=vendor.version,
             models=vendor.models,
             filename=vendor.filename,
@@ -61,10 +51,11 @@ def output_firmware(manifest: List[VendorMetadata]) -> List[Firmware]:
             release_notes=vendor.release_notes,
             discontinued=vendor.discontinued,
         )
-        vendor_firmwares.append(firmware)
+        vendor_firmwares.append(new_firmware)
     return vendor_firmwares
 
 
+#TODO: Maybe it can be done in less steps
 def reorganize_firmwares(pages_with_firmwares_raw: List[Dict]) -> List[Dict]:
     result = []
     all_models = []
@@ -99,6 +90,7 @@ def reorganize_firmwares(pages_with_firmwares_raw: List[Dict]) -> List[Dict]:
         for item in value:
             new_item_group["models"].append(item.get("model"))
             # in theory are the same value for the same urls
+            # TODO: improve this part to avoid the loops
             new_item_group["file_name"] = item.get("filename")
             new_item_group["version"] = item.get("version")
             new_item_group["file_name"] = item.get("file_name")
@@ -119,9 +111,10 @@ def main():
 
     firmwares_list_by_file_url = reorganize_firmwares(pages_with_firmwares_raw)
     vendor_metadata_list = get_manifest(firmwares_list_by_file_url)
-    # firmwares = output_firmware(vendor_metadata_list)
-    # for firmware in firmwares:
-    #     print(firmware.to_json())
+    firmwares_output = output_firmware(vendor_metadata_list)
+
+    for current_firmware in firmwares_output:
+        print(current_firmware.to_json())
 
 
 if __name__ == "__main__":

@@ -1,5 +1,4 @@
 from typing import Optional, Dict, List
-from unicodedata import category
 from bs4 import BeautifulSoup
 import requests
 from urllib.parse import urlparse
@@ -33,7 +32,7 @@ def get_all_firmwares(url: str) -> List[Dict]:
     urls_to_scrape = list(map(lambda x: x["url"], pages_to_scrape))
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
-        pages_content = list(executor.map(scrape_page, urls_to_scrape[:1]))
+        pages_content = list(executor.map(scrape_page, urls_to_scrape))
 
     for index, current_page in enumerate(pages_content):
         firmware_page = FirmwareWebPage(html=current_page)
@@ -42,13 +41,13 @@ def get_all_firmwares(url: str) -> List[Dict]:
     return pages_to_scrape
 
 
-def find_links_with_firmwares(html: BeautifulSoup, path_pattern: str) -> List:
+def find_links_with_firmwares(html: BeautifulSoup, path_pattern: str) -> List[str]:
     links = []
     side_menu = html.find('div',"menu-name-main-menu")
     
     for element in side_menu.select(f'a[href^=\"{path_pattern}\"]'):
         links.append(element['href'])
-
+        
     return links
 
 
